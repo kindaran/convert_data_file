@@ -1,0 +1,15 @@
+{
+    "eqbank":
+    {
+        "file_prefix":"eq_",
+        "source_dir":"D:\\Downloads\\stage",
+        "target_dir":"D:\\Downloads",
+        "archive_dir": "D:\\Downloads\\stage"    
+    },
+    "mbna_weekly":{
+        "file_prefix":"mb_",
+        "source_dir":"D:\\Downloads\\stage",
+        "target_dir":"D:\\Downloads",
+        "archive_dir": "D:\\Downloads\\stage"            
+    }
+}
