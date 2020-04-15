@@ -1,15 +1,19 @@
 {
     "eqbank":
     {
-        "file_prefix":"eq_",
-        "source_dir":"D:\\Downloads\\stage",
-        "target_dir":"D:\\Downloads",
-        "archive_dir": "D:\\Downloads\\stage"    
+        "file_prefix"   :"eq",
+        "source_dir"    :"D:\\Downloads\\stage",
+        "target_dir"    :"D:\\Downloads",
+        "archive_dir"   :"D:\\Downloads\\stage",
+        "file_format"   :"delimited",
+        "delimeter"     :","
     },
     "mbna_weekly":{
-        "file_prefix":"mb_",
-        "source_dir":"D:\\Downloads\\stage",
-        "target_dir":"D:\\Downloads",
-        "archive_dir": "D:\\Downloads\\stage"            
+        "file_prefix"   :"mb",
+        "source_dir"    :"D:\\Downloads\\stage",
+        "target_dir"    :"D:\\Downloads",
+        "archive_dir"   :"D:\\Downloads\\stage",
+        "file_format"   :"delimited",
+        "delimeter"     :","            
     }
 }
