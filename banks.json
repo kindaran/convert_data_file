@@ -6,14 +6,27 @@
         "target_dir"    :"D:\\Downloads",
         "archive_dir"   :"D:\\Downloads\\stage",
         "file_format"   :"delimited",
-        "delimeter"     :","
+        "delimeter"     :",",
+        "target_source_mapping"       : {
+            "Date"      :"Date",
+            "Payee"     :"Description",
+            "Memo"      :"Description",
+            "Outflow"   :"Out",
+            "Inflow"    :"In"
+        }
     },
     "mbna_weekly":{
-        "file_prefix"   :"mb",
+        "file_prefix"   :"mbw",
         "source_dir"    :"D:\\Downloads\\stage",
         "target_dir"    :"D:\\Downloads",
         "archive_dir"   :"D:\\Downloads\\stage",
         "file_format"   :"delimited",
-        "delimeter"     :","            
+        "delimeter"     :",",
+        "target_source_mapping"       : {
+            "Date"      :"Posting Date",
+            "Payee"     :"Description",
+            "Memo"      :"Description",
+            "Amount"    :"Amount"
+        }            
     }
 }

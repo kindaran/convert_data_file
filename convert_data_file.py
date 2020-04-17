@@ -2,6 +2,7 @@ import logging
 import sys
 import os
 import glob
+from datetime import datetime
 
 import json
 import pandas as ps
@@ -9,7 +10,7 @@ import pandas as ps
 ##########
 ## Classes
 ##########
-class DataFile:
+class DataFileConfig:
 
     def __init__(self,key,fileContent):
 
@@ -17,7 +18,7 @@ class DataFile:
             self.__loadConfig(key,fileContent)
         except Exception as e:
             msg = str(e)
-            logging.error("*****Error in Datafile.init(). Error: %s" % (msg))
+            logging.error("*****Error in DataFileConfig.init(). Error: %s" % (msg))
     #END DEF
 
     def __loadConfig(self,key,fileContent):
@@ -29,9 +30,12 @@ class DataFile:
             self.archivePath = fileContent["archive_dir"]
             self.fileFormat = fileContent["file_format"]
             self.delimiter = fileContent["delimeter"]
+            self.mapping = fileContent["target_source_mapping"]
+            self.target_columns = fileContent["target_source_mapping"].keys()
+            self.source_columns = fileContent["target_source_mapping"].values()
         except Exception as e:
             msg = str(e)
-            logging.error("*****Error in Datafile.__loadConfig(). Error: %s" % (msg))
+            logging.error("*****Error in DataFileConfig.__loadConfig(). Error: %s" % (msg))
     #END DEF
             
     def __getFileList(self,p_path):
@@ -48,7 +52,7 @@ class DataFile:
             # end if
         except Exception as e:
             msg = str(e)
-            logging.error("*****Error in Datafile.__getFileList. p_path: %s  Error: %s" % (p_path, msg))
+            logging.error("*****Error in DataFileConfig.__getFileList. p_path: %s  Error: %s" % (p_path, msg))
             return None
 
     def searchSource(self):
@@ -66,7 +70,7 @@ class DataFile:
             return True
         except Exception as e:
             msg = str(e)
-            logging.error("*****Error in Datafile.searchSource(). Error: %s" % (msg))
+            logging.error("*****Error in DataFileConfig.searchSource(). Error: %s" % (msg))
             return False
     #END IF
 
@@ -79,7 +83,11 @@ class DataFile:
 
             for file in self.fileList:
                 if self.fileFormat == "delimited":
-                    self.fileData.append(ps.read_csv(file,delimiter=self.delimiter,encoding='latin'))
+                    self.fileData.append(
+                        ps.read_csv(file,sep=self.delimiter,usecols=self.source_columns,header=0,encoding="latin")
+                    )
+                    #NOTE:  for now, specifying encoding="latin" due to an error trying to read a CSV file. 
+                    #       UTF-8 is default and that wasnt working in one case. May need to add "code page" to config file
                 elif self.fileFormat == "excel":
                     self.fileData.append(ps.read_excel(file))
                 else:
@@ -91,7 +99,59 @@ class DataFile:
             return True
         except Exception as e:
             msg = str(e)
-            logging.error("*****Error in Datafile.searchSource(). Error: %s" % (msg))
+            logging.error("*****Error in DataFileConfig.loadData(). Error: %s" % (msg))
+            return False
+    #END DEF
+
+    def mapData(self):
+
+        self.targetFile = []
+
+        try:
+            logging.debug("*****MAPPING SOURCE DATA TO TARGET FORMAT")
+            for file in self.fileData:
+                target = file.loc[:,self.source_columns]    #pull all rows and specific columns from source
+                target.columns = self.target_columns        #repave the source column names with target
+                self.targetFile.append(
+                        target
+                )
+            #END FOR
+            logging.debug("Target data:\r\n %s" %(self.targetFile))
+            return True
+        except Exception as e:
+            msg = str(e)
+            logging.error("*****Error in DataFileConfig.mapData(). Error: %s" % (msg))
+            return False
+    #END DEF
+
+    def __generateOutputFilename(self,p_filename):
+        try:
+            filename = p_filename.split(".")[0].split("\\")[-1]  ##strips the raw filename out of file string
+            current_datetime = datetime.strftime(datetime.now(), "%Y%m%d%H%M%S")
+            output_filename = filename + "_output_" + current_datetime + ".csv"
+            logging.debug("Output filename: %s" % (output_filename))
+            return output_filename
+        except Exception as e:
+            msg = str(e)
+            logging.error("*****Error in DataFileConfig.__generateOutputFilename. Error: %s" % (msg))
+            return None
+    #END DEF
+
+    def writeTargetFile(self):
+
+        try:
+            logging.debug("*****WRITING TO TARGET FILE")
+            for index in range(len(self.targetFile)):
+                filename = self.fileList[index]
+                filename = self.__generateOutputFilename(filename)
+                qualifiedFilename = self.destPath + "\\" + filename
+                self.targetFile[index].to_csv(qualifiedFilename,index=False,quoting=1)
+            #END FOR
+            logging.debug("Data written to %s" %(qualifiedFilename))
+            return True
+        except Exception as e:
+            msg = str(e)
+            logging.error("*****Error in DataFileConfig.writeTargetFile(). Error: %s" % (msg))
             return False
     #END DEF
 
@@ -170,7 +230,7 @@ def main():
 
         logging.info("*****PROCESS CONFIG FILE")
         #instantiate DataFile objects - one for each "file type" in the config file
-        dataFile = [DataFile(fileType,configFile[fileType]) for fileType in configFile]
+        dataFile = [DataFileConfig(fileType,configFile[fileType]) for fileType in configFile]
         logging.debug("Data file types: %s" %([file.fileType for file in dataFile]))
 
         #main loop
@@ -181,12 +241,26 @@ def main():
                 logging.warning("Unable to find any source file for current file type")
                 continue
             #END
+
             if not file.loadData():
                 logging.warning("Unable to load data for current file type")
                 continue
             #END IF
-            
+        
+            logging.debug("mappings %s" %(file.mapping))
+            logging.debug("target columns %s" %(file.target_columns))
+            logging.debug("source columns %s" %(file.source_columns))
 
+            if not file.mapData():
+                logging.warning("Unable to map data for current file type")
+                continue
+            #END IF
+
+            if not file.writeTargetFile():
+                logging.warning("Unable to write data for current file type")
+                continue
+            #END IF
+    
         #END FOR
 
     except Exception as e:
