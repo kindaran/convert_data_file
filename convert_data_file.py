@@ -27,7 +27,7 @@ class DataFileConfig:
 
     def __loadConfig(self, key, fileContent):
         try:
-            self.fileType = key
+            self.fileType = key     # fileType is a label/name for a specific file definition
             self.filePrefix = fileContent["file_prefix"]
             self.sourcePath = fileContent["source_dir"]
             self.destPath = fileContent["target_dir"]
@@ -62,6 +62,7 @@ class DataFileConfig:
             logging.error(
                 "*****Error in DataFileConfig.__getFileList. p_path: %s  Error: %s" % (p_path, msg))
             return None
+    # END DEF
 
     def searchSource(self):
         try:
@@ -74,7 +75,7 @@ class DataFileConfig:
             # END IF
 
             self.fileList = [
-                file for file in fileList if self.filePrefix.upper() + "_" in file.upper()]
+                file for file in fileList if self.filePrefix.upper() in file.upper()]
             logging.debug("Filelist: %s" % (self.fileList))
             return True
         except Exception as e:
@@ -162,6 +163,8 @@ class DataFileConfig:
 
         try:
             logging.debug("*****WRITING TO TARGET FILE")
+            # the following traverses two lists at the same time - fileList and targetFile
+            # the first is a list of source file names, the second is the transformed source data for the same file
             for index in range(len(self.targetFile)):
                 filename = self.fileList[index]
                 filename = self.__generateOutputFilename(filename)
@@ -244,6 +247,7 @@ def main():
 
     dataFile = []
     args = []
+    configFile = None
 
     try:
         # get command line args
@@ -257,7 +261,6 @@ def main():
 
         # process JSON config file
         logging.info("*****LOAD CONFIG FILE")
-        configFile = None
         configFile = loadConfigFile(configFilePath)
         if configFile == None:
             logging.info("Unable to retrieve config file - ending")
@@ -266,8 +269,8 @@ def main():
 
         logging.info("*****PROCESS CONFIG FILE")
         # instantiate DataFile objects - one for each "file type" in the config file
-        dataFile = [DataFileConfig(fileType, configFile[fileType])
-                    for fileType in configFile]
+        dataFile = [DataFileConfig(fileType, configFile[fileType]) for fileType in configFile]
+
         logging.debug("Data file types: %s" %
                       ([file.fileType for file in dataFile]))
 
